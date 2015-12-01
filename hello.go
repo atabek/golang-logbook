@@ -32,15 +32,18 @@ func guestbookKey(c appengine.Context) *datastore.Key {
 // [START func_root]
 func root(w http.ResponseWriter, r *http.Request) {
         c := appengine.NewContext(r)
+	u := user.Current(c)
+	author := u.String()
         // Ancestor queries, as shown here, are strongly consistent with the High
         // Replication Datastore. Queries that span entity groups are eventually
         // consistent. If we omitted the .Ancestor from this query there would be
         // a slight chance that Greeting that had just been written would not
         // show up in a query.
         // [START query]
-        q := datastore.NewQuery("Greeting").Ancestor(guestbookKey(c)).Order("-Date").Limit(10)
+        q := datastore.NewQuery("Greeting").Ancestor(guestbookKey(c)).Filter("Author =", author).Order("-Date").Limit(10)
         // [END query]
         // [START getall]
+	//fmt.Println(user.Current(c))
         greetings := make([]Greeting, 0, 10)
         if _, err := q.GetAll(c, &greetings); err != nil {
                 http.Error(w, err.Error(), http.StatusInternalServerError)
